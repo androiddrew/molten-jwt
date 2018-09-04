@@ -1,0 +1,6 @@
+[run]
+source = molten_jwt
+omit = test*
+
+[report]
+show_missing = True

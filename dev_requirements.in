@@ -1,0 +1,10 @@
+black
+pip-tools
+tox
+pytest
+coverage
+pytest-cov
+bumpversion
+wheel
+twine
+flake8
