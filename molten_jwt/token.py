@@ -1,4 +1,3 @@
-import datetime as dt
 from inspect import Parameter
 import logging
 from typing import Optional, Dict, Callable, Any, Union
@@ -44,7 +43,7 @@ class JWT:
         """Generates a JWT Auth token"""
         try:
 
-            return pyjwt.encode(payload, self.secret, algorithm=self.algorithm)
+            return pyjwt.encode(payload, self.secret, algorithm=self.algorithm).decode(encoding="utf8")
 
         except PyJWTError as err:
             return err
@@ -125,3 +124,4 @@ class JWTMiddleware:
             return handler()
 
         return middleware
+
