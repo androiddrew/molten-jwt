@@ -26,14 +26,14 @@ def test_JWT_raises_config_error():
 def test_JWT_encode(testing_token):
     jwt = JWT(settings)
     payload = {"sub": "1234567890", "name": "John Doe", "iat": 1516239022}
-    assert testing_token == jwt.encode(payload).decode('utf-8')
+    assert testing_token == jwt.encode(payload).decode("utf-8")
 
 
 def test_JWT_decode(testing_token):
     jwt = JWT(settings)
     payload = {"sub": "1234567890", "name": "John Doe", "iat": 1516239022}
     token = jwt.decode(testing_token)
-    assert payload.get('sub') == token.get('sub')
+    assert payload.get("sub") == token.get("sub")
 
 
 def test_JWT_user_factory(testing_token):
