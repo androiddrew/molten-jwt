@@ -26,7 +26,7 @@ def test_JWT_raises_config_error():
 def test_JWT_encode(testing_token):
     jwt = JWT(settings)
     payload = {"sub": "1234567890", "name": "John Doe", "iat": 1516239022}
-    assert testing_token == jwt.encode(payload).decode("utf-8")
+    assert testing_token == jwt.encode(payload)
 
 
 def test_JWT_decode(testing_token):
