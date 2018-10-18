@@ -2,9 +2,10 @@ from inspect import Parameter
 import logging
 from typing import Optional, Dict, Callable, Any, Union
 
-import jwt as pyjwt
-from jwt.exceptions import PyJWTError
-from molten import Settings, Header, DependencyResolver
+from authlib.specs.rfc7515.errors import BadSignatureError
+from authlib.specs.rfc7519 import jwt
+from authlib.common.errors import AuthlibBaseError
+from molten import Settings, Header
 from molten.errors import HTTPError
 from molten.http import HTTP_401
 
@@ -14,7 +15,11 @@ from .utils import get_token_from_header
 logger = logging.getLogger(__name__)
 
 
+# TODO add dynamic attribute access to the token contents
 class JWTUser:
+    """A `JWTUser` instance represents a decoded user token. All
+    token claims are stored within the `JTWUser.token` dictionary."""
+
     __slots__ = ("id", "user_name", "token")
 
     def __init__(self, id: Union[int, str], user_name: str, token: Dict) -> None:
@@ -24,6 +29,10 @@ class JWTUser:
 
 
 class JWT:
+    """The `JWT` instance is used to both encode and decode JSON Web Tokens
+    (JWTs) within your application. This class requires at a minimum that you
+    provide a `JWT_SECRET` within a `molten.Settings` dictionary"""
+
     def __init__(self, settings: Settings) -> None:
         self.secret: str = settings.get("JWT_SECRET")
         self.algorithm: str = settings.get("JWT_ALGORITHM", "HS256")
@@ -40,28 +49,25 @@ class JWT:
             )
 
     def encode(self, payload: Dict) -> str:
-        """Generates a JWT Auth token"""
+        """Generates a JWT auth token"""
         try:
 
-            return pyjwt.encode(payload, self.secret, algorithm=self.algorithm).decode(encoding="utf8")
+            return jwt.encode(
+                header={"alg": self.algorithm}, payload=payload, key=self.secret
+            ).decode(encoding="utf8")
 
-        except PyJWTError as err:
+        except AuthlibBaseError as err:
             return err
 
-    # TODO Consider supporting multiple algorithms in decode
+    # TODO add support for claims to verify and, claim options, and claim params
     def decode(self, token: str) -> Optional[Dict]:
+        """Decodes a JWT auth token"""
         try:
-            payload = pyjwt.decode(
-                token, self.secret, algorithms=[self.algorithm], **self.options
-            )
+            payload = jwt.decode(token, self.secret, **self.options)
             if payload == {}:
                 raise AuthenticationError("No payload present in token")
-        except pyjwt.MissingRequiredClaimError as err:
-            message = f"JWT Missing claim: {err.claim}"
-            logger.warning(message)
-            raise AuthenticationError(message)
-        except pyjwt.InvalidTokenError as err:
-            message = f"JWT Invalid Token: {err.__class__.__name__}"
+        except BadSignatureError as err:
+            message = f"JWT Exception: {err.result}"
             logger.exception(message)
             raise AuthenticationError(message)
         except Exception as err:
@@ -71,6 +77,8 @@ class JWT:
         return payload
 
     def jwt_user_factory(self, token: str) -> JWTUser:
+        """A factory function for the creation of `molten_jwt.JWTUser
+        objects."""
         _token = self.decode(token)
         user_id = _token.get(self.identity_claim)
         user_name = _token.get(self.user_name_claim)
@@ -78,6 +86,20 @@ class JWT:
 
 
 class JWTComponent:
+    """A component that sets up a JWT instance for use in encoding
+    and decoding JSON Web Tokens. This component depends on the
+    availability of a `molten.Settings` component.
+
+    Your settings dictionary must contain a `JWT_SECRET` setting
+    at a minimum, for use in signing and verifying JWTs. Additionally,
+    you may include:
+
+    `JWT_ALGORITHM`: a string for the `PyJWT` supported algorithm.
+     Defaults to `HS256`.
+
+    `JWT_AUTHORIZATION_PREFIX`: a string for the tokeN scheme. Defaults
+    to `bearer`."""
+
     is_cacheable = True
     is_singleton = True
 
@@ -89,6 +111,19 @@ class JWTComponent:
 
 
 class JWTUserComponent:
+    """A component that instantiates a JWTUser. This component
+    depends on the availability of a `molten.Settings`
+    component and on a `molten_jwt.JWT` component.
+
+    In addition to the `molten_jwt.JWT` configuration settings,
+    you can provide:
+
+    `JWT_USER_ID`: a string value for the claim representing
+    the user id within your token. Defaults to `sub`.
+
+    `JWT_USER_NAME`: a string value for the claim representing
+    the user name within your token. Defaults to `name`."""
+
     is_cacheable = True
     is_singleton = False
 
@@ -105,12 +140,16 @@ class JWTUserComponent:
 
 
 class JWTMiddleware:
-    """A middleware that automatically validates"""
+    """A middleware that automatically validates a JWT passed within
+    the `Authorization` header of the request. This middleware depends
+    on the availability of a `molten.Settings`component, a
+    `molten_jwt.JWT` component, and a molten_jwt.JWTUser` component.
+
+    Use the `molten_jwt.decorators.allow_anonymous` decorator to allow,
+    for non-authenticated access to endpoints when using this middleware"""
 
     def __call__(self, handler: Callable[..., Any]) -> Callable[..., Any]:
-        def middleware(
-            dependency_resolver: DependencyResolver, jwt_user: JWTUser
-        ) -> Any:
+        def middleware(jwt_user: JWTUser) -> Any:
             if getattr(handler, "allow_anonymous", False):
                 return handler()
 
@@ -124,4 +163,3 @@ class JWTMiddleware:
             return handler()
 
         return middleware
-
