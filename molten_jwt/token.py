@@ -2,9 +2,10 @@ from inspect import Parameter
 import logging
 from typing import Optional, Dict, Callable, Any, Union
 
-import jwt as pyjwt
-from jwt.exceptions import PyJWTError
-from molten import Settings, Header, DependencyResolver
+from authlib.specs.rfc7515.errors import BadSignatureError
+from authlib.specs.rfc7519 import jwt
+from authlib.common.errors import AuthlibBaseError
+from molten import Settings, Header
 from molten.errors import HTTPError
 from molten.http import HTTP_401
 
@@ -51,28 +52,22 @@ class JWT:
         """Generates a JWT auth token"""
         try:
 
-            return pyjwt.encode(payload, self.secret, algorithm=self.algorithm).decode(
-                encoding="utf8"
-            )
+            return jwt.encode(
+                header={"alg": self.algorithm}, payload=payload, key=self.secret
+            ).decode(encoding="utf8")
 
-        except PyJWTError as err:
+        except AuthlibBaseError as err:
             return err
 
-    # TODO Consider supporting multiple algorithms in decode
+    # TODO add support for claims to verify and, claim options, and claim params
     def decode(self, token: str) -> Optional[Dict]:
         """Decodes a JWT auth token"""
         try:
-            payload = pyjwt.decode(
-                token, self.secret, algorithms=[self.algorithm], **self.options
-            )
+            payload = jwt.decode(token, self.secret, **self.options)
             if payload == {}:
                 raise AuthenticationError("No payload present in token")
-        except pyjwt.MissingRequiredClaimError as err:
-            message = f"JWT Missing claim: {err.claim}"
-            logger.warning(message)
-            raise AuthenticationError(message)
-        except pyjwt.InvalidTokenError as err:
-            message = f"JWT Invalid Token: {err.__class__.__name__}"
+        except BadSignatureError as err:
+            message = f"JWT Exception: {err.result}"
             logger.exception(message)
             raise AuthenticationError(message)
         except Exception as err:
@@ -99,10 +94,10 @@ class JWTComponent:
     at a minimum, for use in signing and verifying JWTs. Additionally,
     you may include:
 
-    `JWT_ALGORITHM`: a string for the `PyJWT` supported alogrithm.
+    `JWT_ALGORITHM`: a string for the `PyJWT` supported algorithm.
      Defaults to `HS256`.
 
-    `JWT_AUTHORIZATION_PREFIX`: a string for the toke scheme. Defaults
+    `JWT_AUTHORIZATION_PREFIX`: a string for the tokeN scheme. Defaults
     to `bearer`."""
 
     is_cacheable = True
@@ -150,7 +145,7 @@ class JWTMiddleware:
     on the availability of a `molten.Settings`component, a
     `molten_jwt.JWT` component, and a molten_jwt.JWTUser` component.
 
-    Use the `molten_jwt.decoractors.allallow_anonymous` decorator to allow,
+    Use the `molten_jwt.decorators.allow_anonymous` decorator to allow,
     for non-authenticated access to endpoints when using this middleware"""
 
     def __call__(self, handler: Callable[..., Any]) -> Callable[..., Any]:
