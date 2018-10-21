@@ -1,5 +1,8 @@
 # molten-jwt
 
+
+[![PyPI](https://img.shields.io/pypi/v/molten-jwt.svg)](https://pypi.python.org/project/molten-jwt/)
+[![PyPI](https://img.shields.io/pypi/pyversions/molten-jwt.svg)](https://pypi.python.org/project/molten-jwt/)
 [![Build Status](https://travis-ci.org/androiddrew/molten-jwt.svg?branch=master)](https://travis-ci.org/androiddrew/molten-jwt)
 [![codecov](https://codecov.io/gh/androiddrew/molten-jwt/branch/master/graph/badge.svg)](https://codecov.io/gh/androiddrew/molten-jwt)
 
