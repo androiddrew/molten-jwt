@@ -1,0 +1,19 @@
+sudo: false
+language: python
+matrix:
+  include:
+    - os: linux
+      python: 3.6
+      env: TOX_ENV=py36
+    - os: linux
+      python: 3.6
+      env: TOX_ENV=flake8
+
+install:
+  - pip install tox coverage codecov
+
+script:
+  - tox -e $TOX_ENV
+
+after_success:
+  - codecov

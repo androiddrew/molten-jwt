@@ -1,4 +1,8 @@
 # molten-jwt
+
+[![Build Status](https://travis-ci.org/androiddrew/molten-jwt.svg?branch=master)](https://travis-ci.org/androiddrew/molten-jwt)
+[![codecov](https://codecov.io/gh/androiddrew/molten-jwt/branch/master/graph/badge.svg)](https://codecov.io/gh/androiddrew/molten-jwt)
+
 A JSON Web Token component and middleware for the [Molten](https://github.com/Bogdanp/molten) web framework. Many thanks to [apistar-jwt](https://github.com/audiolion/apistar-jwt) for providing the inspiration and starting point for this package.
 
 ## Usage
