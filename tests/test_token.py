@@ -9,9 +9,9 @@ from molten import (
     testing,
     ResponseRendererMiddleware,
 )
-from molten_jwt.token import JWT, JWTComponent, JWTUser, JWTUserComponent, JWTMiddleware
+from molten_jwt.token import JWT, JWTComponent, JWTUser, JWTUserComponent, JWTAuthMiddleware
 from molten_jwt.exceptions import ConfigurationError
-from molten_jwt.decorators import allow_anonymous
+from molten_jwt.decorators import allow_anonymous, claims_required
 
 secret = "keepthissafe"
 
@@ -70,7 +70,7 @@ def test_middleware_raises_401_error():
 
     components = [SettingsComponent(settings), JWTComponent(), JWTUserComponent()]
 
-    middleware = [ResponseRendererMiddleware(), JWTMiddleware()]
+    middleware = [ResponseRendererMiddleware(), JWTAuthMiddleware()]
 
     app = App(routes=routes, components=components, middleware=middleware)
     client = testing.TestClient(app)
@@ -88,13 +88,33 @@ def test_middleware_anonymous_user_support():
 
     components = [SettingsComponent(settings), JWTComponent(), JWTUserComponent()]
 
-    middleware = [ResponseRendererMiddleware(), JWTMiddleware()]
+    middleware = [ResponseRendererMiddleware(), JWTAuthMiddleware()]
 
     app = App(routes=routes, components=components, middleware=middleware)
     client = testing.TestClient(app)
 
     response = client.get("/auth-maybe")
     assert 200 == response.status_code
+    assert "Handler called" in response.data
+
+
+def test_claims_required():
+    @claims_required(['admin'])
+    def test_handler():
+        return "Handler called"
+
+    routes = [Route("/claims", method="GET", handler=test_handler)]
+
+    components = [SettingsComponent(settings)]
+
+    middleware = [ResponseRendererMiddleware()]
+
+    app = App(routes=routes, components=components, middleware=middleware)
+    client = testing.TestClient(app)
+
+    response = client.get('/claims')
+    assert 200 == response.status_code
+    assert test_handler.claims == ['admin']
     assert "Handler called" in response.data
 
 
@@ -108,7 +128,7 @@ def test_middleware_validates_token(testing_token):
 
     components = [SettingsComponent(settings), JWTComponent(), JWTUserComponent()]
 
-    middleware = [ResponseRendererMiddleware(), JWTMiddleware()]
+    middleware = [ResponseRendererMiddleware(), JWTAuthMiddleware()]
 
     app = App(routes=routes, components=components, middleware=middleware)
     client = testing.TestClient(app)

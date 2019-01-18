@@ -101,9 +101,9 @@ app = App(routes=routes, components=components)
 
 ```
 
-### JWTMiddleware
+### JWTAuthMiddleware
 
-The `JWTMiddleware` can be added to your application to automatically validate a JWT passed within the `Authorization` header of the request. This middleware depends on the availability of a `molten.Settings`component, a `molten_jwt.JWT` component, and a `molten_jwt.JWTUser` component.
+The `JWTAuthMiddleware` can be added to your application to automatically validate a JWT passed within the `Authorization` header of the request. This middleware depends on the availability of a `molten.Settings`component, a `molten_jwt.JWT` component, and a `molten_jwt.JWTUser` component.
 
 Use the `molten_jwt.decorators.allow_anonymous` decorator to allow, for non-authenticated access to endpoints when using this middleware.
 
@@ -174,7 +174,7 @@ def anonymous_ok(jwt_user: JWTUser) -> Dict:
 
 components = [SettingsComponent(settings), JWTComponent(), JWTUserComponent()]
 
-middleware = [ResponseRendererMiddleware(), JWTMiddleware()]
+middleware = [ResponseRendererMiddleware(), JWTAuthMiddleware()]
 
 routes = [
     Route("/login", login, method="POST"),

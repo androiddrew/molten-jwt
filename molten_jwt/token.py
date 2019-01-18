@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 # TODO add dynamic attribute access to the token contents
+# TODO Change Class name to JWTIdentity
 class JWTUser:
     """A `JWTUser` instance represents a decoded user token. All
     token claims are stored within the `JTWUser.token` dictionary."""
@@ -28,6 +29,9 @@ class JWTUser:
         self.token = token
 
 
+# TODO init function should take parameters not a settings dictionary.
+# TODO JWT should support other JWS options
+# TODO JWT should support JWE options.
 class JWT:
     """The `JWT` instance is used to both encode and decode JSON Web Tokens
     (JWTs) within your application. This class requires at a minimum that you
@@ -84,7 +88,7 @@ class JWT:
         user_name = _token.get(self.user_name_claim)
         return JWTUser(user_id, user_name, _token)
 
-
+# TODO JWTComponent should be changed to provide a JWT instance for use in JWTIdentity
 class JWTComponent:
     """A component that sets up a JWT instance for use in encoding
     and decoding JSON Web Tokens. This component depends on the
@@ -110,6 +114,8 @@ class JWTComponent:
         return JWT(settings)
 
 
+# TODO Rename to JWTIdentityComponent
+# TODO spec out support for JWT from a cookie instead of the Authorization header
 class JWTUserComponent:
     """A component that instantiates a JWTUser. This component
     depends on the availability of a `molten.Settings`
@@ -139,7 +145,8 @@ class JWTUserComponent:
         return jwt_user
 
 
-class JWTMiddleware:
+# TODO add middleware checks for authorization claims.
+class JWTAuthMiddleware:
     """A middleware that automatically validates a JWT passed within
     the `Authorization` header of the request. This middleware depends
     on the availability of a `molten.Settings`component, a

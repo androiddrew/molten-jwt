@@ -13,3 +13,5 @@ def get_token_from_header(authorization: Header, authorization_prefix: str):
     if scheme.lower() != authorization_prefix:
         raise AuthenticationError("Authorization scheme not supported, try Bearer")
     return token
+
+# TODO create a get_token_from_cookie function
