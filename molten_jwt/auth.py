@@ -84,7 +84,7 @@ class JWTAuthMiddleware:
     def __call__(self, handler: Callable[..., Any]) -> Callable[..., Any]:
         def middleware(jwt_identity: JWTIdentity, settings: Settings) -> Any:
 
-            white_list = settings.get("JWT_AUTH_WHITE_LIST", [])
+            white_list = settings.get("JWT_AUTH_WHITELIST", [])
 
             if (
                 getattr(handler, "allow_anonymous", False)

@@ -110,7 +110,7 @@ def test_middleware_white_listing(testing_token):
     routes = [Route("/whitelisted", method="GET", handler=test_handler)]
 
     components = [
-        SettingsComponent({**settings, "JWT_AUTH_WHITE_LIST": ["test_handler"]}),
+        SettingsComponent({**settings, "JWT_AUTH_WHITELIST": ["test_handler"]}),
         JWTComponent(),
         JWTIdentityComponent(),
     ]
