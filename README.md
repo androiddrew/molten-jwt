@@ -6,13 +6,13 @@
 [![Build Status](https://travis-ci.org/androiddrew/molten-jwt.svg?branch=master)](https://travis-ci.org/androiddrew/molten-jwt)
 [![codecov](https://codecov.io/gh/androiddrew/molten-jwt/branch/master/graph/badge.svg)](https://codecov.io/gh/androiddrew/molten-jwt)
 
-A JSON Web Token component and middleware for the [Molten](https://github.com/Bogdanp/molten) web framework. Many thanks to [apistar-jwt](https://github.com/audiolion/apistar-jwt) for providing the inspiration and starting point for this package.
+A JSON Web Token(JWT) library built on top of [Authlib](https://github.com/lepture/authlib) for use in the [Molten](https://github.com/Bogdanp/molten) web framework.
 
 ## Usage
 
 ### JWT
 
-The `JWT` object provides the methods to encode and decode JSON Web Tokens in your application or middleware.
+The `JWT` class provides the core methods to encode and decode JSON Web Tokens in your application or middleware. All tokens produced are signed with a key according to the JSON Web Signature(JWS) specification. *Note: This does not mean that tokens are encrypted. This signature is used to prevent tampering.*
 
 Register the `JWTComponent` with your Molten application and provide a `JWT_SECRET` in the molten `Settings`. The `SettingsComponent` is utilized to provide the configuration for your `JWT` injectable instance. Now simply annotate your a handler param with the `JWT` type and use it to encode your JSON Web Token. 
 
@@ -69,9 +69,9 @@ routes = [Route("/login", login, method="POST")]
 app = App(routes=routes, components=components)
 ```
 
-### JWTUser
+### JWTIdentity
 
-A `JWTUser` component can be added to your application to provide a user representation from the decoded token passed in the request `Authorization` header. Add the `JWTUserComponent` to your app's component list then inject the `JWTUser` into your handler. In the event that the `Authorization` header is not found or if an error occurs in the decoding of the token the `JWTUserComponent` will return `None`. 
+A `JWTIdentity` component can be added to your application to provide a user representation from the decoded token passed in the request `Authorization` header. Add the `JWTIdentityComponent` to your app's component list then inject the `JWTIdentity` into your handler. In the event that the `Authorization` header is not found or if an error occurs in the decoding of the token the `JWTIdentityComponent` will return `None`. 
 
 ```python
 
@@ -103,7 +103,7 @@ app = App(routes=routes, components=components)
 
 ### JWTAuthMiddleware
 
-The `JWTAuthMiddleware` can be added to your application to automatically validate a JWT passed within the `Authorization` header of the request. This middleware depends on the availability of a `molten.Settings`component, a `molten_jwt.JWT` component, and a `molten_jwt.JWTUser` component.
+The `JWTAuthMiddleware` can be added to your application to automatically validate a JWT passed within the `Authorization` header of the request. This middleware depends on the availability of a `molten.Settings`component, a `molten_jwt.JWT` component, and a `molten_jwt.JWTIdentity` component.
 
 Use the `molten_jwt.decorators.allow_anonymous` decorator to allow, for non-authenticated access to endpoints when using this middleware.
 
@@ -185,3 +185,7 @@ routes = [
 app = App(routes=routes, components=components, middleware=middleware)
 
 ```
+
+### Attribution
+
+Many thanks to [apistar-jwt](https://github.com/audiolion/apistar-jwt) for providing the inspiration and starting point for this package.

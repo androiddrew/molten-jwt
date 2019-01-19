@@ -1,37 +1,18 @@
 from inspect import Parameter
 import logging
-from typing import Optional, Dict, Callable, Any, Union
+from typing import Optional, Dict
 
 from authlib.specs.rfc7515.errors import BadSignatureError
 from authlib.specs.rfc7519 import jwt
 from authlib.common.errors import AuthlibBaseError
-from molten import Settings, Header
-from molten.errors import HTTPError
-from molten.http import HTTP_401
+from molten import Settings
 
 from .exceptions import ConfigurationError, AuthenticationError
-from .utils import get_token_from_header
 
 logger = logging.getLogger(__name__)
 
 
-# TODO add dynamic attribute access to the token contents
-# TODO Change Class name to JWTIdentity
-class JWTUser:
-    """A `JWTUser` instance represents a decoded user token. All
-    token claims are stored within the `JTWUser.token` dictionary."""
-
-    __slots__ = ("id", "user_name", "token")
-
-    def __init__(self, id: Union[int, str], user_name: str, token: Dict) -> None:
-        self.id = id
-        self.user_name = user_name
-        self.token = token
-
-
 # TODO init function should take parameters not a settings dictionary.
-# TODO JWT should support other JWS options
-# TODO JWT should support JWE options.
 class JWT:
     """The `JWT` instance is used to both encode and decode JSON Web Tokens
     (JWTs) within your application. This class requires at a minimum that you
@@ -80,13 +61,6 @@ class JWT:
             raise AuthenticationError(message)
         return payload
 
-    def jwt_user_factory(self, token: str) -> JWTUser:
-        """A factory function for the creation of `molten_jwt.JWTUser
-        objects."""
-        _token = self.decode(token)
-        user_id = _token.get(self.identity_claim)
-        user_name = _token.get(self.user_name_claim)
-        return JWTUser(user_id, user_name, _token)
 
 # TODO JWTComponent should be changed to provide a JWT instance for use in JWTIdentity
 class JWTComponent:
@@ -98,8 +72,7 @@ class JWTComponent:
     at a minimum, for use in signing and verifying JWTs. Additionally,
     you may include:
 
-    `JWT_ALGORITHM`: a string for the `PyJWT` supported algorithm.
-     Defaults to `HS256`.
+    `JWT_ALGORITHM`: Defaults to `HS256`.
 
     `JWT_AUTHORIZATION_PREFIX`: a string for the tokeN scheme. Defaults
     to `bearer`."""
@@ -112,61 +85,3 @@ class JWTComponent:
 
     def resolve(self, settings: Settings) -> JWT:
         return JWT(settings)
-
-
-# TODO Rename to JWTIdentityComponent
-# TODO spec out support for JWT from a cookie instead of the Authorization header
-class JWTUserComponent:
-    """A component that instantiates a JWTUser. This component
-    depends on the availability of a `molten.Settings`
-    component and on a `molten_jwt.JWT` component.
-
-    In addition to the `molten_jwt.JWT` configuration settings,
-    you can provide:
-
-    `JWT_USER_ID`: a string value for the claim representing
-    the user id within your token. Defaults to `sub`.
-
-    `JWT_USER_NAME`: a string value for the claim representing
-    the user name within your token. Defaults to `name`."""
-
-    is_cacheable = True
-    is_singleton = False
-
-    def can_handle_parameter(self, parameter: Parameter) -> bool:
-        return parameter.annotation is JWTUser
-
-    def resolve(self, jwt: JWT, authorization: Optional[Header]) -> Optional[JWTUser]:
-        try:
-            token = get_token_from_header(authorization, jwt.authorization_prefix)
-            jwt_user = jwt.jwt_user_factory(token)
-        except AuthenticationError as err:
-            return None
-        return jwt_user
-
-
-# TODO add middleware checks for authorization claims.
-class JWTAuthMiddleware:
-    """A middleware that automatically validates a JWT passed within
-    the `Authorization` header of the request. This middleware depends
-    on the availability of a `molten.Settings`component, a
-    `molten_jwt.JWT` component, and a molten_jwt.JWTUser` component.
-
-    Use the `molten_jwt.decorators.allow_anonymous` decorator to allow,
-    for non-authenticated access to endpoints when using this middleware"""
-
-    def __call__(self, handler: Callable[..., Any]) -> Callable[..., Any]:
-        def middleware(jwt_user: JWTUser) -> Any:
-            if getattr(handler, "allow_anonymous", False):
-                return handler()
-
-            if jwt_user is None:
-                raise HTTPError(
-                    HTTP_401,
-                    response="UNAUTHORIZED",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-
-            return handler()
-
-        return middleware
