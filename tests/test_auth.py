@@ -99,3 +99,33 @@ def test_middleware_validates_token(testing_token):
     )
     assert 200 == response.status_code
     assert "1234567890" in response.data
+
+
+def test_middleware_white_listing(testing_token):
+    def test_handler(jwt_identity: JWTIdentity):
+        if jwt_identity is None:
+            return "No user token present"
+        return jwt_identity.id
+
+    routes = [Route("/whitelisted", method="GET", handler=test_handler)]
+
+    components = [
+        SettingsComponent({**settings, "JWT_AUTH_WHITE_LIST": ["test_handler"]}),
+        JWTComponent(),
+        JWTIdentityComponent(),
+    ]
+
+    middleware = [ResponseRendererMiddleware(), JWTAuthMiddleware()]
+
+    app = App(routes=routes, components=components, middleware=middleware)
+    client = testing.TestClient(app)
+
+    response = client.get(
+        "/whitelisted", headers={"Authorization": f"Bearer {testing_token}"}
+    )
+
+    unauthenticated = client.get("/whitelisted")
+    assert 200 == response.status_code
+    assert "1234567890" in response.data
+    assert 200 == unauthenticated.status_code
+    assert "No user token present" in unauthenticated.data

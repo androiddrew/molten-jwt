@@ -1,5 +1,15 @@
 # History
 
+### 0.2.0 Change / Added / Fixed
+
+* `JWTUser` is now known as `JWTIdentity`
+* `JWTIdentity` now has dynamic attribute access to its token claims via standard dot notation
+* Authentication code and components have been relocated to `molten_jwt.auth`
+* `JWT` is now a simple wrapper around `authlib.jwt` with no dependencies on the `molten.Settings`.
+* `JWTComponent` will return a single JWT instance configured from the settings passed in the `molten.Settings`
+* `JWTIdentityComponent` now has a setting to extract a JWTdentity from a JWT passed in a named cookie.
+* `JWTAuthMiddleware` now has new settings to control authentication checking, including a whitelist of handlers.
+
 ### 0.1.1 Added / Fixed
 
 * Updated documentation before push to Pypi

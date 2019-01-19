@@ -7,4 +7,10 @@ __version__ = "0.1.1"
 from molten_jwt.token import JWT, JWTComponent
 from molten_jwt.auth import JWTAuthMiddleware, JWTIdentity, JWTIdentityComponent
 
-__all__ = ["JWT", "JWTComponent", "JWTAuthMiddleware", "JWTIdentity", "JWTIdentityComponent"]
+__all__ = [
+    "JWT",
+    "JWTComponent",
+    "JWTAuthMiddleware",
+    "JWTIdentity",
+    "JWTIdentityComponent",
+]

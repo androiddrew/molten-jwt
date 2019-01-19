@@ -1,7 +1,7 @@
 from inspect import Parameter
 from typing import Callable, Any, Union, Dict, Optional
 
-from molten import HTTPError, HTTP_401, Header
+from molten import HTTPError, HTTP_401, Header, Settings
 
 from molten_jwt.token import JWT
 from molten_jwt.exceptions import AuthenticationError
@@ -31,6 +31,7 @@ class JWTIdentity:
         return value
 
 
+# TODO Add support for extracting a JWT token from a named cookie in settings
 class JWTIdentityComponent:
     """A component that instantiates a JWTIdentity. This component
     depends on the availability of a `molten.Settings`
@@ -52,13 +53,18 @@ class JWTIdentityComponent:
         return parameter.annotation is JWTIdentity
 
     def resolve(
-        self, jwt: JWT, authorization: Optional[Header]
+        self, settings: Settings, jwt: JWT, authorization: Optional[Header]
     ) -> Optional[JWTIdentity]:
+
+        authorization_prefix: str = settings.get("JWT_AUTH_PREFIX", "bearer")
+        identity_claim: str = settings.get("JWT_AUTH_USER_ID", "sub")
+        user_name_claim: str = settings.get("JWT_AUTH_USER_NAME", "name")
+
         try:
-            token = get_token_from_header(authorization, jwt.authorization_prefix)
+            token = get_token_from_header(authorization, authorization_prefix)
             decoded_token = jwt.decode(token)
-            user_id = decoded_token.get(jwt.identity_claim)
-            user_name = decoded_token.get(jwt.user_name_claim)
+            user_id = decoded_token.get(identity_claim)
+            user_name = decoded_token.get(user_name_claim)
             jwt_identity = JWTIdentity(user_id, user_name, decoded_token)
         except AuthenticationError:
             return None
@@ -76,8 +82,14 @@ class JWTAuthMiddleware:
     for non-authenticated access to endpoints when using this middleware"""
 
     def __call__(self, handler: Callable[..., Any]) -> Callable[..., Any]:
-        def middleware(jwt_identity: JWTIdentity) -> Any:
-            if getattr(handler, "allow_anonymous", False):
+        def middleware(jwt_identity: JWTIdentity, settings: Settings) -> Any:
+
+            white_list = settings.get("JWT_AUTH_WHITE_LIST", [])
+
+            if (
+                getattr(handler, "allow_anonymous", False)
+                or handler.__name__ in white_list
+            ):
                 return handler()
 
             if jwt_identity is None:

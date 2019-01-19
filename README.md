@@ -12,9 +12,24 @@ A JSON Web Token(JWT) library built on top of [Authlib](https://github.com/leptu
 
 ### JWT
 
-The `JWT` class provides the core methods to encode and decode JSON Web Tokens in your application or middleware. All tokens produced are signed with a key according to the JSON Web Signature(JWS) specification. *Note: This does not mean that tokens are encrypted. This signature is used to prevent tampering.*
+The `JWT` class provides the core methods to encode and decode JSON Web Tokens in your application or middleware. All tokens produced are signed with a key and algorithm according to the JSON Web Signature(JWS) specification. 
 
-Register the `JWTComponent` with your Molten application and provide a `JWT_SECRET` in the molten `Settings`. The `SettingsComponent` is utilized to provide the configuration for your `JWT` injectable instance. Now simply annotate your a handler param with the `JWT` type and use it to encode your JSON Web Token. 
+*__Note__: Signing a token does not mean that the token contents are encrypted. This signature is used to prevent tampering. Take care not to expose private information in unencrypted tokens. Also please always use transport level security (TLS)*
+
+```python
+from molten_jwt import JWT
+
+jwt = JWT(key='asecretkeyforsigning', algorithm="HS256")
+
+token = jwt.encode({'sub': 'superman'})
+
+decoded = jwt.decode(token)
+
+```
+
+### JWT from dependency injection
+
+Register the `JWTComponent` with your Molten application and provide a `JWT_SECRET_KEY` in the molten `Settings`. The `SettingsComponent` is utilized to provide the configuration for your `JWT` injectable instance. Now simply annotate your a handler param with the `JWT` type and use it to encode your JSON Web Token. 
 
 ```python
 from typing import Dict
@@ -32,7 +47,7 @@ from molten.errors import HTTPError
 
 from molten_jwt import JWT, JWTComponent
 
-settings = Settings({"JWT_SECRET": "donotcommittoversioncontrol"})
+settings = Settings({"JWT_SECRET_KEY": "donotcommittoversioncontrol"})
 
 
 @schema
@@ -105,7 +120,7 @@ app = App(routes=routes, components=components)
 
 The `JWTAuthMiddleware` can be added to your application to automatically validate a JWT passed within the `Authorization` header of the request. This middleware depends on the availability of a `molten.Settings`component, a `molten_jwt.JWT` component, and a `molten_jwt.JWTIdentity` component.
 
-Use the `molten_jwt.decorators.allow_anonymous` decorator to allow, for non-authenticated access to endpoints when using this middleware.
+Use the `molten_jwt.decorators.allow_anonymous` decorator to allow, for non-authenticated access to endpoints when using this middleware. Use the `JWT_AUTH_WHITELIST` setting to provided a list of handler names that should skip authentication checks.
 
 
 ```python

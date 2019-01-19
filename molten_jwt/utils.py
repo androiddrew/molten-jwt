@@ -1,15 +1,6 @@
 from molten import Header
-from molten import Settings
 
-from .token import JWT
 from .exceptions import AuthenticationError
-
-
-def config_jwt_from_settings(settings: Settings) -> JWT:
-    """Configures a `molten_jwt.JWT` instance from a `molten.Settings`
-    instance.
-    """
-    pass
 
 
 def get_token_from_header(authorization: Header, authorization_prefix: str):
