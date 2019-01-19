@@ -60,7 +60,7 @@ class JWTIdentityComponent:
             user_id = decoded_token.get(jwt.identity_claim)
             user_name = decoded_token.get(jwt.user_name_claim)
             jwt_identity = JWTIdentity(user_id, user_name, decoded_token)
-        except AuthenticationError as err:
+        except AuthenticationError:
             return None
         return jwt_identity
 
