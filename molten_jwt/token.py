@@ -12,7 +12,6 @@ from .exceptions import AuthenticationError, ConfigurationError
 logger = logging.getLogger(__name__)
 
 
-# TODO init function should take parameters not a settings dictionary.
 class JWT:
     """The `JWT` class provides the core methods to encode and decode JSON
     Web Tokens in your application or middleware. All tokens produced are
@@ -24,11 +23,6 @@ class JWT:
         self.key = key
         self.alg = alg
         self.options = options
-        # self.authorization_prefix: str = settings.get(
-        #     "JWT_AUTHORIZATION_PREFIX", "bearer"
-        # )
-
-        # self.options: Dict = settings.get("JWT_OPTIONS", {})
 
     def encode(self, payload: Dict) -> str:
         """Generates a JSON Web Token as a utf8 string from a dictionary payload."""

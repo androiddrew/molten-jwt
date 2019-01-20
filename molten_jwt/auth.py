@@ -1,11 +1,11 @@
 from inspect import Parameter
 from typing import Callable, Any, Union, Dict, Optional
 
-from molten import HTTPError, HTTP_401, Header, Settings
+from molten import HTTPError, HTTP_401, Header, Settings, Cookies
 
 from molten_jwt.token import JWT
 from molten_jwt.exceptions import AuthenticationError
-from molten_jwt.utils import get_token_from_header
+from molten_jwt.utils import get_token_from_header, get_token_from_cookie
 
 
 class JWTIdentity:
@@ -31,7 +31,6 @@ class JWTIdentity:
         return value
 
 
-# TODO Add support for extracting a JWT token from a named cookie in settings
 class JWTIdentityComponent:
     """A component that instantiates a JWTIdentity. This component
     depends on the availability of a `molten.Settings`
@@ -53,15 +52,23 @@ class JWTIdentityComponent:
         return parameter.annotation is JWTIdentity
 
     def resolve(
-        self, settings: Settings, jwt: JWT, authorization: Optional[Header]
+        self,
+        settings: Settings,
+        jwt: JWT,
+        authorization: Optional[Header],
+        cookies: Cookies,
     ) -> Optional[JWTIdentity]:
 
+        auth_cookie_name: str = settings.get("JWT_AUTH_COOKIE")
         authorization_prefix: str = settings.get("JWT_AUTH_PREFIX", "bearer")
         identity_claim: str = settings.get("JWT_AUTH_USER_ID", "sub")
         user_name_claim: str = settings.get("JWT_AUTH_USER_NAME", "name")
 
         try:
-            token = get_token_from_header(authorization, authorization_prefix)
+            if auth_cookie_name is None:
+                token = get_token_from_header(authorization, authorization_prefix)
+            else:
+                token = get_token_from_cookie(cookies, auth_cookie_name)
             decoded_token = jwt.decode(token)
             user_id = decoded_token.get(identity_claim)
             user_name = decoded_token.get(user_name_claim)

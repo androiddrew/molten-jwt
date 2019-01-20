@@ -1,8 +1,17 @@
 import pytest
-from molten import Route, SettingsComponent, ResponseRendererMiddleware, App, testing
-
+from molten import (
+    Route,
+    SettingsComponent,
+    ResponseRendererMiddleware,
+    App,
+    testing,
+    Response,
+    Cookie,
+)
+from molten.http import HTTP_200
 
 from molten_jwt import (
+    JWT,
     JWTComponent,
     JWTIdentityComponent,
     JWTAuthMiddleware,
@@ -21,6 +30,62 @@ def test_dynamic_access_of_jwt_identity():
     assert ident.iat == 1516239022
     with pytest.raises(AttributeError):
         ident.dirp
+
+
+def test_identity_extract_jwt_from_cookie():
+    def test_auth(jwt: JWT):
+        cookie_name = "molten_auth_cookie"
+        cookie_value = jwt.encode({"sub": 123456, "name": "spiderman"})
+        auth_response = Response(HTTP_200)
+        auth_response.set_cookie(Cookie(cookie_name, cookie_value))
+        return auth_response
+
+    def test_cookie(jwt_identity: JWTIdentity):
+        if jwt_identity is None:
+            return "Didn't work"
+        return f"Hello {jwt_identity.name} your sub id is {jwt_identity.sub}"
+
+    routes = [
+        Route("/auth", method="POST", handler=test_auth),
+        Route("/cookie", method="GET", handler=test_cookie),
+    ]
+
+    components = [
+        SettingsComponent({**settings, **{"JWT_AUTH_COOKIE": "molten_auth_cookie"}}),
+        JWTComponent(),
+        JWTIdentityComponent(),
+    ]
+
+    app = App(routes=routes, components=components)
+    client = testing.TestClient(app)
+
+    auth_response = client.post("/auth")
+    cookie_value = auth_response.headers.get_all("set-cookie")[0]
+    assert "molten_auth_cookie" in cookie_value
+    cookie_response = client.get("/cookie", headers={"cookie": cookie_value})
+    assert "123456" in cookie_response.data
+    assert "spiderman" in cookie_response.data
+
+
+def test_missing_auth_cookie():
+    def test_cookie(jwt_identity: JWTIdentity):
+        if jwt_identity is None:
+            return "Didn't work"
+        return f"Hello {jwt_identity.name} your sub id is {jwt_identity.sub}"
+
+    routes = [Route("/cookie", method="GET", handler=test_cookie)]
+
+    components = [
+        SettingsComponent({**settings, **{"JWT_AUTH_COOKIE": "molten_auth_cookie"}}),
+        JWTComponent(),
+        JWTIdentityComponent(),
+    ]
+
+    app = App(routes=routes, components=components)
+    client = testing.TestClient(app)
+
+    cookie_response = client.get("/cookie")
+    assert "Didn't work" in cookie_response.data
 
 
 def test_middleware_raises_401_error():

@@ -7,7 +7,7 @@
 * Authentication code and components have been relocated to `molten_jwt.auth`
 * `JWT` is now a simple wrapper around `authlib.jwt` with no dependencies on the `molten.Settings`.
 * `JWTComponent` will return a single JWT instance configured from the settings passed in the `molten.Settings`
-* `JWTIdentityComponent` now has a setting to extract a JWTdentity from a JWT passed in a named cookie.
+* `JWTIdentityComponent` now has a setting to extract a JWTdentity from a json web token passed in a named cookie.
 * `JWTAuthMiddleware` now has new settings to control authentication checking, including a whitelist of handlers.
 
 ### 0.1.1 Added / Fixed

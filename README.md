@@ -26,7 +26,7 @@ token = jwt.encode({'sub': 'superman'})
 decoded = jwt.decode(token)
 ```
 
-### JWT from dependency injection
+### JWT with dependency injection
 
 Register the `JWTComponent` with your Molten application and provide a `JWT_SECRET_KEY` in the molten `Settings`. The `SettingsComponent` is utilized to provide the configuration for your `JWT` injectable instance. Now simply annotate your a handler param with the `JWT` type and use it to encode your JSON Web Token. 
 
@@ -85,7 +85,7 @@ app = App(routes=routes, components=components)
 
 ### JWTIdentity
 
-A `JWTIdentity` component can be added to your application to provide a user representation from the decoded token passed in the request `Authorization` header. Add the `JWTIdentityComponent` to your app's component list then inject the `JWTIdentity` into your handler. In the event that the `Authorization` header is not found or if an error occurs in the decoding of the token the `JWTIdentityComponent` will return `None`. 
+A `JWTIdentity` component can be added to your application to provide a user representation from a decoded access token. By default this library assumes your access token is sent in the `Authorization` header of the request. Alternatively, you can provide a cookie name using `JWT_AUTH_COOKIE` within your settings, however current functionality does not support both methods. Add the `JWTIdentityComponent` to your app's component list then inject the `JWTIdentity` into your handler. In the event that the `Authorization` header / cookie is not found or if an error occurs in the decoding of the token the `JWTIdentityComponent` will return `None`.
 
 ```python
 
@@ -117,7 +117,7 @@ app = App(routes=routes, components=components)
 
 ### JWTAuthMiddleware
 
-The `JWTAuthMiddleware` can be added to your application to automatically validate a JWT passed within the `Authorization` header of the request. This middleware depends on the availability of a `molten.Settings`component, a `molten_jwt.JWT` component, and a `molten_jwt.JWTIdentity` component.
+The `JWTAuthMiddleware` can be added to your application to globally validate that a JSON Web Token was passed within the `Authorization` header or a named cookie of the request. This middleware depends on the availability of a `molten.Settings`component, a `molten_jwt.JWT` component, and a `molten_jwt.JWTIdentity` component.
 
 Use the `molten_jwt.decorators.allow_anonymous` decorator to allow for non-authenticated access to endpoints when using this middleware. Alternatively, the `JWT_AUTH_WHITELIST` setting can be used to provided a list of handler names that should skip authentication checks.
 
