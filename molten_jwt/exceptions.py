@@ -7,3 +7,7 @@ class ConfigurationError(MoltenError):
 
 class AuthenticationError(MoltenError):
     """Raised when JWT Authentication fails"""
+
+
+class AuthorizationError(MoltenError):
+    """Raised when a JWT claims check fails"""

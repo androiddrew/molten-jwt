@@ -9,14 +9,14 @@
 appdirs==1.4.3            # via black
 atomicwrites==1.2.1       # via pytest
 attrs==18.2.0             # via black, pytest
-black==18.6b4
+black==18.9b0
 bumpversion==0.5.3
 certifi==2018.8.24        # via requests
 chardet==3.0.4            # via requests
 click==6.7                # via black, pip-tools
 coverage==4.5.1
 first==2.0.1              # via pip-tools
-flake8==3.5.0
+flake8==3.6.0
 idna==2.7                 # via requests
 mccabe==0.6.1             # via flake8
 more-itertools==4.3.0     # via pytest
@@ -24,8 +24,8 @@ pip-tools==2.0.2
 pkginfo==1.4.2            # via twine
 pluggy==0.7.1             # via pytest, tox
 py==1.6.0                 # via pytest, tox
-pycodestyle==2.3.1        # via flake8
-pyflakes==1.6.0           # via flake8
+pycodestyle==2.4.0        # via flake8
+pyflakes==2.0.0           # via flake8
 pytest-cov==2.6.0
 pytest==3.7.4
 requests-toolbelt==0.8.0  # via twine
