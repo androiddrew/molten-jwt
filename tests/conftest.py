@@ -1,5 +1,7 @@
 import pytest
-from authlib.specs.rfc7519 import jwt
+from authlib import jose
+
+jwt = jose.JWT()
 
 
 @pytest.fixture(scope="function")

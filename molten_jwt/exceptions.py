@@ -11,3 +11,7 @@ class AuthenticationError(MoltenError):
 
 class AuthorizationError(MoltenError):
     """Raised when a JWT claims check fails"""
+
+
+class TokenExpirationError(MoltenError):
+    """Raised when a JWT exp claim has expired"""

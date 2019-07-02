@@ -7,34 +7,45 @@
 --trusted-host pypi.python.org
 
 appdirs==1.4.3            # via black
-atomicwrites==1.2.1       # via pytest
-attrs==18.2.0             # via black, pytest
-black==18.9b0
+atomicwrites==1.3.0       # via pytest
+attrs==19.1.0             # via black, pytest
+black==19.3b0
+bleach==3.1.0             # via readme-renderer
 bumpversion==0.5.3
-certifi==2018.8.24        # via requests
+certifi==2019.6.16        # via requests
 chardet==3.0.4            # via requests
-click==6.7                # via black, pip-tools
-coverage==4.5.1
-first==2.0.1              # via pip-tools
-flake8==3.6.0
-idna==2.7                 # via requests
+click==7.0                # via black, pip-tools
+coverage==4.5.3
+docutils==0.14            # via readme-renderer
+entrypoints==0.3          # via flake8
+filelock==3.0.12          # via tox
+flake8==3.7.7
+idna==2.8                 # via requests
+importlib-metadata==0.18  # via pluggy, pytest, tox
 mccabe==0.6.1             # via flake8
-more-itertools==4.3.0     # via pytest
-pip-tools==2.0.2
-pkginfo==1.4.2            # via twine
-pluggy==0.7.1             # via pytest, tox
-py==1.6.0                 # via pytest, tox
-pycodestyle==2.4.0        # via flake8
-pyflakes==2.0.0           # via flake8
-pytest-cov==2.6.0
-pytest==3.7.4
-requests-toolbelt==0.8.0  # via twine
-requests==2.19.1          # via requests-toolbelt, twine
-six==1.11.0               # via more-itertools, pip-tools, pytest, tox
-toml==0.9.4               # via black
-tox==3.2.1
-tqdm==4.25.0              # via twine
-twine==1.11.0
-urllib3==1.23             # via requests
-virtualenv==16.0.0        # via tox
-wheel==0.31.1
+more-itertools==7.1.0     # via pytest
+packaging==19.0           # via pytest, tox
+pip-tools==3.8.0
+pkginfo==1.5.0.1          # via twine
+pluggy==0.12.0            # via pytest, tox
+py==1.8.0                 # via pytest, tox
+pycodestyle==2.5.0        # via flake8
+pyflakes==2.1.1           # via flake8
+pygments==2.4.2           # via readme-renderer
+pyparsing==2.4.0          # via packaging
+pytest-cov==2.7.1
+pytest==5.0.0
+readme-renderer==24.0     # via twine
+requests-toolbelt==0.9.1  # via twine
+requests==2.22.0          # via requests-toolbelt, twine
+six==1.12.0               # via bleach, packaging, pip-tools, readme-renderer, tox
+toml==0.10.0              # via black, tox
+tox==3.13.2
+tqdm==4.32.2              # via twine
+twine==1.13.0
+urllib3==1.25.3           # via requests
+virtualenv==16.6.1        # via tox
+wcwidth==0.1.7            # via pytest
+webencodings==0.5.1       # via bleach
+wheel==0.33.4
+zipp==0.5.1               # via importlib-metadata

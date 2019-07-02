@@ -6,7 +6,7 @@ with open("README.md") as readme_file:
 with open("HISTORY.md") as history_file:
     history = history_file.read()
 
-requirements = ["molten>=0.7.1", "Authlib>=0.10,<0.11"]
+requirements = ["molten>=0.7.1", "Authlib>=0.11,<0.12"]
 
 test_requirements = ["pytest", "pytest-cov", "tox"]
 

@@ -2,14 +2,16 @@ from inspect import Parameter
 import logging
 from typing import Optional, Dict
 
-from authlib.specs.rfc7515.errors import BadSignatureError
-from authlib.specs.rfc7519 import jwt
+from authlib import jose
+from authlib.jose.errors import BadSignatureError
 from authlib.common.errors import AuthlibBaseError
 from molten import Settings
 
 from .exceptions import AuthenticationError, ConfigurationError
 
 logger = logging.getLogger(__name__)
+
+jwt = jose.JWT()
 
 
 class JWT:
