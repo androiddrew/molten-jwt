@@ -1,5 +1,10 @@
 # History
 
+### 0.2.1 Change / Fixed
+
+* Fixed README.md code examples
+* Pinned Authlib version due to API changes in Authlib 0.11
+
 ### 0.2.0 Change / Added / Fixed
 
 * `JWTUser` is now known as `JWTIdentity`
@@ -18,4 +23,3 @@
 ### 0.1.0 Change
 
 Switched from using PyJWT to Authlib for JWT support
-

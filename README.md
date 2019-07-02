@@ -91,19 +91,19 @@ A `JWTIdentity` component can be added to your application to provide a user rep
 
 ...
 
-from molten_jwt import JWT, JWTUser, JWTComponent, JWTUserComponent
+from molten_jwt import JWT, JWTIdentity, JWTComponent, JWTIdentityComponent
 
 ...
 
 
-def protected_endpoint(jwt_user: JWTUser) -> Dict:
+def protected_endpoint(jwt_user: JWTIdentity) -> Dict:
     if jwt_user is None:
         raise HTTPError(HTTP_403, "Forbidden")
 
     return {"user_id": jwt_user.id, "name": jwt_user.user_name, "token": jwt_user.token}
 
 
-components = [SettingsComponent(settings), JWTComponent(), JWTUserComponent()]
+components = [SettingsComponent(settings), JWTComponent(), JWTIdentityComponent()]
 
 routes = [
     Route("/login", login, method="POST"),
@@ -138,7 +138,7 @@ from molten import (
 )
 from molten.errors import HTTPError
 
-from molten_jwt import JWT, JWTUser, JWTComponent, JWTUserComponent, JWTMiddleware
+from molten_jwt import JWT, JWTIdentity, JWTComponent, JWTIdentityComponent, JWTAuthMiddleware
 from molten_jwt.decorators import allow_anonymous
 
 settings = Settings({"JWT_SECRET": "donotcommittoversioncontrol"})
@@ -172,13 +172,13 @@ def login(data: UserData, jwt: JWT) -> Dict:
     return {"token": token}
 
 
-def protected_endpoint(jwt_user: JWTUser) -> Dict:
+def protected_endpoint(jwt_user: JWTIdentity) -> Dict:
     """Will raise a 401 HTTP status if a JWT is not present or is invalid"""
     return {"user_id": jwt_user.id, "name": jwt_user.user_name, "token": jwt_user.token}
 
 
 @allow_anonymous
-def anonymous_ok(jwt_user: JWTUser) -> Dict:
+def anonymous_ok(jwt_user: JWTIdentity) -> Dict:
     if jwt_user is None:
         return {
             "message": "JWT token not presented or is invalid. Accessing resource as anonymous."
@@ -186,7 +186,7 @@ def anonymous_ok(jwt_user: JWTUser) -> Dict:
     return {"user_id": jwt_user.id, "name": jwt_user.user_name, "token": jwt_user.token}
 
 
-components = [SettingsComponent(settings), JWTComponent(), JWTUserComponent()]
+components = [SettingsComponent(settings), JWTComponent(), JWTIdentityComponent()]
 
 middleware = [ResponseRendererMiddleware(), JWTAuthMiddleware()]
 

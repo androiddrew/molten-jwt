@@ -6,13 +6,13 @@ with open("README.md") as readme_file:
 with open("HISTORY.md") as history_file:
     history = history_file.read()
 
-requirements = ["molten>=0.7.1", "Authlib>=0.10"]
+requirements = ["molten>=0.7.1", "Authlib>=0.10,<0.11"]
 
 test_requirements = ["pytest", "pytest-cov", "tox"]
 
 setup(
     name="molten_jwt",
-    version="0.2.0",
+    version="0.2.1",
     description="A JSON Web Token library for the Molten web framework",
     long_description=readme + "\n\n" + history,
     long_description_content_type="text/markdown",
