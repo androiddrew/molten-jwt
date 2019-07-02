@@ -138,7 +138,7 @@ from molten import (
 )
 from molten.errors import HTTPError
 
-from molten_jwt import JWT, JWTIdentity, JWTComponent, JWTIdentityComponent, JWTAuthMiddleware
+from molten_jwt import JWT, JWTUser, JWTComponent, JWTUserComponent, JWTMiddleware
 from molten_jwt.decorators import allow_anonymous
 
 settings = Settings({"JWT_SECRET": "donotcommittoversioncontrol"})
@@ -172,13 +172,13 @@ def login(data: UserData, jwt: JWT) -> Dict:
     return {"token": token}
 
 
-def protected_endpoint(jwt_user: JWTIdentity) -> Dict:
+def protected_endpoint(jwt_user: JWTUser) -> Dict:
     """Will raise a 401 HTTP status if a JWT is not present or is invalid"""
     return {"user_id": jwt_user.id, "name": jwt_user.user_name, "token": jwt_user.token}
 
 
 @allow_anonymous
-def anonymous_ok(jwt_user: JWTIdentity) -> Dict:
+def anonymous_ok(jwt_user: JWTUser) -> Dict:
     if jwt_user is None:
         return {
             "message": "JWT token not presented or is invalid. Accessing resource as anonymous."
@@ -186,7 +186,7 @@ def anonymous_ok(jwt_user: JWTIdentity) -> Dict:
     return {"user_id": jwt_user.id, "name": jwt_user.user_name, "token": jwt_user.token}
 
 
-components = [SettingsComponent(settings), JWTComponent(), JWTIdentityComponent()]
+components = [SettingsComponent(settings), JWTComponent(), JWTUserComponent()]
 
 middleware = [ResponseRendererMiddleware(), JWTAuthMiddleware()]
 
@@ -199,6 +199,21 @@ routes = [
 app = App(routes=routes, components=components, middleware=middleware)
 
 ```
+
+### Setting Options
+
+The following settings can be used to configure the the behavior of Molten JWT. The key values are uppercase and begin with `JWT_`.
+
+| Setting | Purpose | Type | Default |
+|---|---|---|---|
+|JWT_SECRET_KEY| _Required_. A secret key used to sign tokens.| str | None|
+|JWT_ALGORITHM| The algorithm used to sign tokens. | str | "HS256" |
+|JWT_CLAIMS_OPTIONS| A dictionary of options to be used in validating a `JWTClaims` instance's content. | dict | None |
+|JWT_AUTH_PREFIX| Used to determine the prefix of the `Authorization` header. | str | "bearer" |
+|JWT_AUTH_USER_ID| Claim that holds the `JWTIdentity's` id. | str | "sub" |
+|JWT_AUTH_USER_NAME| Claim that holds the `JWTIdentity's` name. | str | "name" |
+|JWT_AUTH_COOKIE| Controls the behavior of `JWTAuthMiddleware`. If set the middleware will look for a cookie of this name containing a JWT authentication token instead of the `Authorization` header. | str | None |
+|JWT_AUTH_WHITELIST| A list of handler names used to by pass authentication checks. To be used instead of the `allow_anonymous` decorator. | List[str] | None
 
 ### Attribution
 

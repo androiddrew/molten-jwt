@@ -4,6 +4,7 @@ from typing import Optional, Dict
 
 from authlib import jose
 from authlib.jose.errors import BadSignatureError
+from authlib.jose.rfc7519.claims import JWTClaims as JWTClaimsBase
 from authlib.common.errors import AuthlibBaseError
 from molten import Settings
 
@@ -12,6 +13,10 @@ from .exceptions import AuthenticationError, ConfigurationError
 logger = logging.getLogger(__name__)
 
 jwt = jose.JWT()
+
+
+class JWTClaims(JWTClaimsBase):
+    """wrapper class around `authlib.jose.rfc7519.claims.JWTClaims`."""
 
 
 class JWT:
@@ -37,12 +42,13 @@ class JWT:
         except AuthlibBaseError as err:
             return err
 
-    # TODO add support for claims to verify and, claim options, and claim params
-    def decode(self, token: str) -> Optional[Dict]:
-        """Decodes a JWT token"""
+    def decode(self, token: str) -> JWTClaims:
+        """Decodes a JWT token returning a JWTClaims instance."""
         try:
-            payload = jwt.decode(token, self.key, **self.options)
-            if payload == {}:
+            jwt_claims = jwt.decode(
+                token, key=self.key, claims_cls=JWTClaims, claims_options=self.options
+            )
+            if jwt_claims == {}:
                 raise AuthenticationError("No payload present in token")
         except BadSignatureError as err:
             message = f"JWT Exception: {err.result}"
@@ -52,7 +58,7 @@ class JWT:
             message = f"JWT Exception: {err.__class__.__name__}"
             logger.exception(message)
             raise AuthenticationError(message)
-        return payload
+        return jwt_claims
 
 
 def config_jwt_from_settings(settings: Settings) -> JWT:
@@ -67,13 +73,14 @@ def config_jwt_from_settings(settings: Settings) -> JWT:
     """
     key: str = settings.get("JWT_SECRET_KEY")
     alg: str = settings.get("JWT_ALGORITHM", "HS256")
+    options: dict = settings.get("JWT_CLAIMS_OPTIONS", {})
 
     if key is None:
         raise ConfigurationError(
             "JWT_SECRET_KEY passed as part of settings on instantiation"
         )
 
-    return JWT(key=key, alg=alg)
+    return JWT(key=key, alg=alg, **options)
 
 
 class JWTComponent:

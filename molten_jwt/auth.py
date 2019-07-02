@@ -3,7 +3,7 @@ from typing import Callable, Any, Union, Dict, Optional
 
 from molten import HTTPError, HTTP_401, Header, Settings, Cookies
 
-from molten_jwt.token import JWT
+from molten_jwt.token import JWT, JWTClaims
 from molten_jwt.exceptions import AuthenticationError
 from molten_jwt.utils import get_token_from_header, get_token_from_cookie
 
@@ -19,7 +19,7 @@ class JWTIdentity:
 
     __slots__ = ("id", "user_name", "token")
 
-    def __init__(self, id: Union[int, str], user_name: str, token: Dict) -> None:
+    def __init__(self, id: Union[int, str], user_name: str, token: JWTClaims) -> None:
         self.id = id
         self.user_name = user_name
         self.token = token
