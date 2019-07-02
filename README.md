@@ -91,19 +91,19 @@ A `JWTIdentity` component can be added to your application to provide a user rep
 
 ...
 
-from molten_jwt import JWT, JWTUser, JWTComponent, JWTUserComponent
+from molten_jwt import JWT, JWTIdentity, JWTComponent, JWTIdentityComponent
 
 ...
 
 
-def protected_endpoint(jwt_user: JWTUser) -> Dict:
+def protected_endpoint(jwt_user: JWTIdentity) -> Dict:
     if jwt_user is None:
         raise HTTPError(HTTP_403, "Forbidden")
 
     return {"user_id": jwt_user.id, "name": jwt_user.user_name, "token": jwt_user.token}
 
 
-components = [SettingsComponent(settings), JWTComponent(), JWTUserComponent()]
+components = [SettingsComponent(settings), JWTComponent(), JWTIdentityComponent()]
 
 routes = [
     Route("/login", login, method="POST"),
@@ -199,6 +199,20 @@ routes = [
 app = App(routes=routes, components=components, middleware=middleware)
 
 ```
+
+### Setting Options
+
+The following settings can be used to configure the the behavior of Molten JWT. The key values are uppercase and begin with `JWT_`.
+
+| Setting | Purpose | Type | Default |
+|---|---|---|---|
+|JWT_SECRET_KEY| _Required_. A secret key used to sign tokens.| str | None|
+|JWT_ALGORITHM| The algorithm used to sign tokens. | str | "HS256" |
+|JWT_AUTH_PREFIX| Used to determine the prefix of the `Authorization` header. | str | "bearer" |
+|JWT_AUTH_USER_ID| Claim that holds the `JWTIdentity's` id. | str | "sub" |
+|JWT_AUTH_USER_NAME| Claim that holds the `JWTIdentity's` name. | str | "name" |
+|JWT_AUTH_COOKIE| Controls the behavior of `JWTAuthMiddleware`. If set the middleware will look for a cookie of this name containing a JWT authentication token instead of the `Authorization` header. | str | None |
+|JWT_AUTH_WHITELIST| A list of handler names used to by pass authentication checks. To be used instead of the `allow_anonymous` decorator. | List[str] | None
 
 ### Attribution
 
