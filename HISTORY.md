@@ -1,5 +1,13 @@
 # History
 
+### 0.3.0 Change / Added / Fixed
+
+* `JWTAuthMiddleware` now validates JWT claims using the `required_claims` decorator and the standard `Authlib` validation mechanism. `Authlib` claim options can be passed to the component using the `JWT_CLAIMS_OPTIONS` setting.
+* `JWTAuthMiddleware` now raises an HTTP 403 error if `required_claims` check fails.
+* `JWT_ALGORITHM` is now a required setting when using `JWTComponent`. HS256 is no longer a default and will raise a `ConfigurationError` if None.
+* `JWT_PRIVATE_KEY_FILE` and `JWT_PUBLIC_KEY_FILE` are now options in settings and are required for RS*, ES*, and PS* algorithms.
+
+
 ### 0.2.1 Change / Fixed
 
 * Fixed README.md code examples

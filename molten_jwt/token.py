@@ -1,14 +1,13 @@
 from inspect import Parameter
 import logging
-from typing import Optional, Dict
+from typing import Dict
 
 from authlib import jose
-from authlib.jose.errors import BadSignatureError
+from authlib.jose.errors import BadSignatureError, JoseError
 from authlib.jose.rfc7519.claims import JWTClaims as JWTClaimsBase
-from authlib.common.errors import AuthlibBaseError
 from molten import Settings
 
-from .exceptions import AuthenticationError, ConfigurationError
+from .exceptions import AuthenticationError, ConfigurationError, TokenValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +16,13 @@ jwt = jose.JWT()
 
 class JWTClaims(JWTClaimsBase):
     """wrapper class around `authlib.jose.rfc7519.claims.JWTClaims`."""
+
+    def validate(self, now=None, leeway=0):
+        """Calls all validators on the super class converting exceptions raised exceptions to a single type."""
+        try:
+            super().validate(now=now, leeway=leeway)
+        except JoseError as err:
+            raise TokenValidationError(err.error + ": " + err.description) from err
 
 
 class JWT:
@@ -33,14 +39,9 @@ class JWT:
 
     def encode(self, payload: Dict) -> str:
         """Generates a JSON Web Token as a utf8 string from a dictionary payload."""
-        try:
-
-            return jwt.encode(
-                header={"alg": self.alg}, payload=payload, key=self.key
-            ).decode(encoding="utf8")
-
-        except AuthlibBaseError as err:
-            return err
+        return jwt.encode(
+            header={"alg": self.alg}, payload=payload, key=self.key
+        ).decode(encoding="utf8")
 
     def decode(self, token: str) -> JWTClaims:
         """Decodes a JWT token returning a JWTClaims instance."""
@@ -53,11 +54,11 @@ class JWT:
         except BadSignatureError as err:
             message = f"JWT Exception: {err.result}"
             logger.exception(message)
-            raise AuthenticationError(message)
+            raise AuthenticationError(message) from err
         except Exception as err:
             message = f"JWT Exception: {err.__class__.__name__}"
             logger.exception(message)
-            raise AuthenticationError(message)
+            raise AuthenticationError(message) from err
         return jwt_claims
 
 
@@ -72,10 +73,10 @@ def config_jwt_from_settings(settings: Settings) -> JWT:
     `JWT_ALGORITHM`: Defaults to `HS256`.
     """
     key: str = settings.get("JWT_SECRET_KEY")
-    alg: str = settings.get("JWT_ALGORITHM", "HS256")
+    alg: str = settings.get("JWT_ALGORITHM")
     options: dict = settings.get("JWT_CLAIMS_OPTIONS", {})
 
-    if key is None:
+    if key is None or alg is None:
         raise ConfigurationError(
             "JWT_SECRET_KEY passed as part of settings on instantiation"
         )
@@ -92,7 +93,7 @@ class JWTComponent:
     at a minimum, for use in signing and verifying JWTs. Additionally,
     you may include:
 
-    `JWT_ALGORITHM`: Defaults to `HS256`.
+    `JWT_ALGORITHM`: is required.
     """
 
     is_cacheable = True

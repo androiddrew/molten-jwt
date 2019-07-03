@@ -1,4 +1,4 @@
-from typing import Callable, List, Any
+from typing import Callable, Any, Mapping
 
 
 def allow_anonymous(handler: Callable[..., Any]) -> Callable[..., Any]:
@@ -10,11 +10,20 @@ def allow_anonymous(handler: Callable[..., Any]) -> Callable[..., Any]:
 
 
 class claims_required:
-    """A decorator used to mark a handler as requiring certain claims
-    to be presented within the JWT token. This in turn is used by the
-    `molten_jwt.JWTAuthMiddleware` to determine authorization requirements."""
+    """A decorator used to mark a handler as requiring certain claims and values
+    to be present within the JWT token. This in turn is used by the
+    `molten_jwt.JWTAuthMiddleware` to determine authorization requirements.
 
-    def __init__(self, claims: List[str]):
+    Example:
+
+        @claims_required({"admin": True})
+        def handler():
+            return response
+
+
+    """
+
+    def __init__(self, claims: Mapping[str, Any]):
         self.claims = claims
 
     def __call__(self, handler: Callable[..., Any]) -> Callable[..., Any]:
