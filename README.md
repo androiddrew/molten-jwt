@@ -208,6 +208,7 @@ The following settings can be used to configure the the behavior of Molten JWT. 
 |---|---|---|---|
 |JWT_SECRET_KEY| A secret key used to sign tokens. **Required** _for HS256, HS384, or HS512_.| str | None|
 |JWT_PRIVATE_KEY_FILE| A path to a private key file. **Required** _for RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, or PS512_ |file path|None|
+|JWT_PRIVATE_KEY_PASSWD| A password used to protect the private key. **Optional** _Whe _ | str |None|
 |JWT_PUBLIC_KEY_FILE| A path to a public key file. **Required** _for RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, or PS512_ |file path|None|
 |JWT_ALGORITHM| The algorithm used to sign tokens. **Required** | str | None |
 |JWT_CLAIMS_OPTIONS| A dictionary of options to be used in validating a `JWTClaims` instance's content.  | dict | None |

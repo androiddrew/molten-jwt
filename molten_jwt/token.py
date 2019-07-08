@@ -13,12 +13,27 @@ logger = logging.getLogger(__name__)
 
 jwt = jose.JWT()
 
+SUPPORTED_ALGORITHMS = [
+    "HS256",
+    "HS384",
+    "HS512",
+    "RS256",
+    "RS384",
+    "RS512",
+    "ES256",
+    "ES384",
+    "ES512",
+    "PS256",
+    "PS384",
+    "PS512",
+]
+
 
 class JWTClaims(JWTClaimsBase):
     """wrapper class around `authlib.jose.rfc7519.claims.JWTClaims`."""
 
     def validate(self, now=None, leeway=0):
-        """Calls all validators on the super class converting exceptions raised exceptions to a single type."""
+        """proxy's validate to super class converting exceptions to a single type."""
         try:
             super().validate(now=now, leeway=leeway)
         except JoseError as err:
@@ -32,9 +47,18 @@ class JWT:
     specification.
     """
 
-    def __init__(self, key: str, alg: str, **options) -> None:
+    def __init__(
+        self, key: str, pub_key: str = None, alg: str = None, **options
+    ) -> None:
         self.key = key
+        if not self._valid_alg(alg):
+            raise ValueError(
+                f"alg {alg} must be a supports algorithm: {SUPPORTED_ALGORITHMS}"
+            )
+        if alg in SUPPORTED_ALGORITHMS[3:] and pub_key is None:
+            raise ValueError(f"alg {alg} requires a public key.")
         self.alg = alg
+        self.pub_key = pub_key
         self.options = options
 
     def encode(self, payload: Dict) -> str:
@@ -46,9 +70,21 @@ class JWT:
     def decode(self, token: str) -> JWTClaims:
         """Decodes a JWT token returning a JWTClaims instance."""
         try:
-            jwt_claims = jwt.decode(
-                token, key=self.key, claims_cls=JWTClaims, claims_options=self.options
-            )
+
+            if self.alg in SUPPORTED_ALGORITHMS[3:]:
+                jwt_claims = jwt.decode(
+                    token,
+                    key=self.pub_key,
+                    claims_cls=JWTClaims,
+                    claims_options=self.options,
+                )
+            else:
+                jwt_claims = jwt.decode(
+                    token,
+                    key=self.key,
+                    claims_cls=JWTClaims,
+                    claims_options=self.options,
+                )
             if jwt_claims == {}:
                 raise AuthenticationError("No payload present in token")
         except BadSignatureError as err:
@@ -60,6 +96,10 @@ class JWT:
             logger.exception(message)
             raise AuthenticationError(message) from err
         return jwt_claims
+
+    def _valid_alg(self, alg=None) -> bool:
+        """Validates that the provided algorithm is supported."""
+        return alg in SUPPORTED_ALGORITHMS
 
 
 def config_jwt_from_settings(settings: Settings) -> JWT:
@@ -81,7 +121,12 @@ def config_jwt_from_settings(settings: Settings) -> JWT:
             "JWT_SECRET_KEY passed as part of settings on instantiation"
         )
 
-    return JWT(key=key, alg=alg, **options)
+    try:
+        jwt = JWT(key=key, alg=alg, **options)
+    except JoseError:
+        raise ConfigurationError()
+
+    return jwt
 
 
 class JWTComponent:
