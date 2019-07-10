@@ -1,5 +1,6 @@
-from inspect import Parameter
+import os
 import logging
+from inspect import Parameter
 from typing import Dict
 
 from authlib import jose
@@ -8,25 +9,29 @@ from authlib.jose.rfc7519.claims import JWTClaims as JWTClaimsBase
 from molten import Settings
 
 from .exceptions import AuthenticationError, ConfigurationError, TokenValidationError
+from .utils import read_key_file
 
 logger = logging.getLogger(__name__)
 
 jwt = jose.JWT()
 
-SUPPORTED_ALGORITHMS = [
+HMAC_ALGORITHMS = [
     "HS256",
     "HS384",
-    "HS512",
-    "RS256",
-    "RS384",
-    "RS512",
-    "ES256",
-    "ES384",
-    "ES512",
-    "PS256",
-    "PS384",
-    "PS512",
-]
+    "HS512", ]
+
+PK_ALGORITHMS = ["RS256",
+                 "RS384",
+                 "RS512",
+                 "ES256",
+                 "ES384",
+                 "ES512",
+                 "PS256",
+                 "PS384",
+                 "PS512",
+                 ]
+
+SUPPORTED_ALGORITHMS = HMAC_ALGORITHMS + PK_ALGORITHMS
 
 
 class JWTClaims(JWTClaimsBase):
@@ -48,14 +53,14 @@ class JWT:
     """
 
     def __init__(
-        self, key: str, pub_key: str = None, alg: str = None, **options
+            self, key: str, pub_key: str = None, alg: str = None, options: Dict = None
     ) -> None:
         self.key = key
         if not self._valid_alg(alg):
             raise ValueError(
                 f"alg {alg} must be a supports algorithm: {SUPPORTED_ALGORITHMS}"
             )
-        if alg in SUPPORTED_ALGORITHMS[3:] and pub_key is None:
+        if alg in PK_ALGORITHMS and pub_key is None:
             raise ValueError(f"alg {alg} requires a public key.")
         self.alg = alg
         self.pub_key = pub_key
@@ -110,21 +115,45 @@ def config_jwt_from_settings(settings: Settings) -> JWT:
     at a minimum, for use in signing and verifying JWTs. Additionally,
     you may include:
 
-    `JWT_ALGORITHM`: Defaults to `HS256`.
+    `JWT_ALGORITHM`: is required.
     """
     key: str = settings.get("JWT_SECRET_KEY")
+    private_key: str = settings.get("JWT_PRIVATE_KEY_FILE")
+    public_key: str = settings.get("JWT_PUBLIC_KEY_FILE")
     alg: str = settings.get("JWT_ALGORITHM")
     options: dict = settings.get("JWT_CLAIMS_OPTIONS", {})
 
-    if key is None or alg is None:
+    if alg is None:
         raise ConfigurationError(
-            "JWT_SECRET_KEY passed as part of settings on instantiation"
+            "JWT_ALGORITHM is a required setting. See documentation for a list of supported algorithms."
+        )
+    if alg not in SUPPORTED_ALGORITHMS:
+        raise ConfigurationError(
+            "JWT_ALGORITHM is invalid. See documentation for a list of supported algorithms."
         )
 
+    if alg in PK_ALGORITHMS and (private_key is None or public_key is None):
+        raise ConfigurationError(
+            f"JWT_ALGORITHM selected ({alg}) is missing a public or private key path. \
+             Use JWT_PRIVATE_KEY_FILE and JWT_PUBLIC_KEY_FILE settings."
+        )
+
+    if alg in PK_ALGORITHMS and not (os.path.isfile(private_key) or os.path.isfile(public_key)):
+        raise ConfigurationError(
+            f"JWT_PRIVATE_KEY_FILE and JWT_PUBLIC_KEY_FILE settings must be a path to a key file."
+        )
+
+    if key is None and alg in HMAC_ALGORITHMS:
+        raise ConfigurationError(
+            f"JWT_ALGORITHM selected {alg} requires a secret string for signing. Use JWT_SECRET_KEY setting.")
+
     try:
-        jwt = JWT(key=key, alg=alg, **options)
-    except JoseError:
-        raise ConfigurationError()
+        if alg in PK_ALGORITHMS:
+            jwt = JWT(key=read_key_file(private_key), pub_key=read_key_file(public_key), alg=alg, options=options)
+        else:
+            jwt = JWT(key=key, pub_key=public_key, alg=alg, options=options)
+    except JoseError as err:
+        raise ConfigurationError(err.error + ": " + err.description) from err
 
     return jwt
 
@@ -148,4 +177,7 @@ class JWTComponent:
         return parameter.annotation is JWT
 
     def resolve(self, settings: Settings) -> JWT:
-        return config_jwt_from_settings(settings)
+        try:
+            return config_jwt_from_settings(settings)
+        except ConfigurationError as err:
+            logger.debug(err)
