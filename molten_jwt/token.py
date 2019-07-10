@@ -15,21 +15,19 @@ logger = logging.getLogger(__name__)
 
 jwt = jose.JWT()
 
-HMAC_ALGORITHMS = [
-    "HS256",
-    "HS384",
-    "HS512", ]
+HMAC_ALGORITHMS = ["HS256", "HS384", "HS512"]
 
-PK_ALGORITHMS = ["RS256",
-                 "RS384",
-                 "RS512",
-                 "ES256",
-                 "ES384",
-                 "ES512",
-                 "PS256",
-                 "PS384",
-                 "PS512",
-                 ]
+PK_ALGORITHMS = [
+    "RS256",
+    "RS384",
+    "RS512",
+    "ES256",
+    "ES384",
+    "ES512",
+    "PS256",
+    "PS384",
+    "PS512",
+]
 
 SUPPORTED_ALGORITHMS = HMAC_ALGORITHMS + PK_ALGORITHMS
 
@@ -125,7 +123,8 @@ def config_jwt_from_settings(settings: Settings) -> JWT:
 
     if alg is None:
         raise ConfigurationError(
-            "JWT_ALGORITHM is a required setting. See documentation for a list of supported algorithms."
+            "JWT_ALGORITHM is a required setting. See documentation for a \
+             list of supported algorithms."
         )
     if alg not in SUPPORTED_ALGORITHMS:
         raise ConfigurationError(
@@ -138,18 +137,27 @@ def config_jwt_from_settings(settings: Settings) -> JWT:
              Use JWT_PRIVATE_KEY_FILE and JWT_PUBLIC_KEY_FILE settings."
         )
 
-    if alg in PK_ALGORITHMS and not (os.path.isfile(private_key) or os.path.isfile(public_key)):
+    if alg in PK_ALGORITHMS and not (
+            os.path.isfile(private_key) or os.path.isfile(public_key)
+    ):
         raise ConfigurationError(
             f"JWT_PRIVATE_KEY_FILE and JWT_PUBLIC_KEY_FILE settings must be a path to a key file."
         )
 
     if key is None and alg in HMAC_ALGORITHMS:
         raise ConfigurationError(
-            f"JWT_ALGORITHM selected {alg} requires a secret string for signing. Use JWT_SECRET_KEY setting.")
+            f"JWT_ALGORITHM selected {alg} requires a secret string for signing. \
+             Use JWT_SECRET_KEY setting."
+        )
 
     try:
         if alg in PK_ALGORITHMS:
-            jwt = JWT(key=read_key_file(private_key), pub_key=read_key_file(public_key), alg=alg, options=options)
+            jwt = JWT(
+                key=read_key_file(private_key),
+                pub_key=read_key_file(public_key),
+                alg=alg,
+                options=options,
+            )
         else:
             jwt = JWT(key=key, pub_key=public_key, alg=alg, options=options)
     except JoseError as err:

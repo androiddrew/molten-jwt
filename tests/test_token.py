@@ -20,12 +20,20 @@ def test_JWT_init_raises_error_for_missing_public_key(rsa_keys):
         JWT(key=rsa_keys[0], alg="RS256")
 
 
-@pytest.mark.parametrize("settings", [{}, {"JWT_ALGORITHM": "dirp"},
-                                      {"JWT_ALGORITHM": "RS256"},
-                                      {"JWT_ALGORITHM": "RS256", "JWT_PRIVATE_KEY_FILE": "notafilepath",
-                                       "JWT_PUBLIC_KEY_FILE": "alsonotapath"},
-                                      {"JWT_ALGORITHM": "HS256"}, ]
-                         )
+@pytest.mark.parametrize(
+    "settings",
+    [
+        {},
+        {"JWT_ALGORITHM": "dirp"},
+        {"JWT_ALGORITHM": "RS256"},
+        {
+            "JWT_ALGORITHM": "RS256",
+            "JWT_PRIVATE_KEY_FILE": "notafilepath",
+            "JWT_PUBLIC_KEY_FILE": "alsonotapath",
+        },
+        {"JWT_ALGORITHM": "HS256"},
+    ],
+)
 def test_config_jwt_from_settings_raises_config_error(settings):
     with pytest.raises(ConfigurationError):
         config_jwt_from_settings(settings=settings)
@@ -86,7 +94,7 @@ def test_JWT_decode_raises_error_on_empty_payload(app_settings):
 
 
 def test_JWT_decode_raises_authentication_error_on_tampered_token(
-        app_settings, testing_token
+    app_settings, testing_token
 ):
     jwt = JWT(key=app_settings.get("JWT_SECRET_KEY"), alg="HS256")
     with pytest.raises(AuthenticationError) as err:
