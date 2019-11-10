@@ -51,7 +51,7 @@ class JWT:
     """
 
     def __init__(
-            self, key: str, pub_key: str = None, alg: str = None, options: Dict = None
+        self, key: str, pub_key: str = None, alg: str = None, options: Dict = None
     ) -> None:
         self.key = key
         if not self._valid_alg(alg):
@@ -138,7 +138,7 @@ def config_jwt_from_settings(settings: Settings) -> JWT:
         )
 
     if alg in PK_ALGORITHMS and not (
-            os.path.isfile(private_key) or os.path.isfile(public_key)
+        os.path.isfile(private_key) or os.path.isfile(public_key)
     ):
         raise ConfigurationError(
             f"JWT_PRIVATE_KEY_FILE and JWT_PUBLIC_KEY_FILE settings must be a path to a key file."
