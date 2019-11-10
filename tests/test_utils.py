@@ -3,6 +3,11 @@ from molten_jwt.exceptions import AuthenticationError
 from molten_jwt.utils import get_token_from_header
 
 
+@pytest.mark.skip
+def test_read_key_file():
+    pass
+
+
 def test_missing_authorization_header_in_token_retrieval():
     with pytest.raises(AuthenticationError) as err:
         get_token_from_header(None, "bearer")

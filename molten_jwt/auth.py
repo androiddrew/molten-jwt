@@ -1,10 +1,10 @@
 from inspect import Parameter
-from typing import Callable, Any, Union, Dict, Optional
+from typing import Callable, Any, Union, Optional
 
-from molten import HTTPError, HTTP_401, Header, Settings, Cookies
+from molten import HTTPError, HTTP_401, HTTP_403, Header, Settings, Cookies
 
-from molten_jwt.token import JWT
-from molten_jwt.exceptions import AuthenticationError
+from molten_jwt.token import JWT, JWTClaims
+from molten_jwt.exceptions import AuthenticationError, TokenValidationError
 from molten_jwt.utils import get_token_from_header, get_token_from_cookie
 
 
@@ -19,7 +19,7 @@ class JWTIdentity:
 
     __slots__ = ("id", "user_name", "token")
 
-    def __init__(self, id: Union[int, str], user_name: str, token: Dict) -> None:
+    def __init__(self, id: Union[int, str], user_name: str, token: JWTClaims) -> None:
         self.id = id
         self.user_name = user_name
         self.token = token
@@ -98,10 +98,16 @@ class JWTAuthMiddleware:
     component.
 
     Use the `molten_jwt.decorators.allow_anonymous` decorator on a handler
-    to allow, for non-authenticated access to endpoints.
+    to allow for non-authenticated access to an individual endpoint.
 
-    Use the `JWT_AUTH_WHITELIST` setting to specify a list of handlers
+    Use the `JWT_AUTH_WHITELIST` setting to specify a list of handler functions
     that should be excluded from authentication checks.
+
+    Token decode errors and failed validations result in a HTTP 401
+    Unauthorized response with the WWW-Authenticate header set to Bearer.
+    This means the user should reauthenticate with the application and try
+    again. Missing claims in a valid token will result in an HTTP 403 Forbidden
+    response and no further requests should be made.
     """
 
     def __call__(self, handler: Callable[..., Any]) -> Callable[..., Any]:
@@ -114,13 +120,33 @@ class JWTAuthMiddleware:
                 or handler.__name__ in white_list
             ):
                 return handler()
-
+            # TODO change this error message to something more sensible.
             if jwt_identity is None:
                 raise HTTPError(
                     HTTP_401,
                     response="UNAUTHORIZED",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
+            try:
+                jwt_identity.token.validate()
+            except TokenValidationError as err:
+                raise HTTPError(
+                    HTTP_401,
+                    response={"status": 401, "error_message": str(err)},
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+            if hasattr(handler, "claims"):
+                claim_errors = [
+                    {k: v}
+                    for k, v in handler.claims.items()
+                    if k not in jwt_identity.token or v != jwt_identity.token.get(k)
+                ]
+                if claim_errors:
+                    raise HTTPError(
+                        HTTP_403,
+                        response={"status": 403, "error_message": claim_errors},
+                    )
 
             return handler()
 
